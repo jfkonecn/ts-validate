@@ -2,6 +2,7 @@ import readline from "readline";
 
 export async function readFromStandardIn(): Promise<string> {
   return await new Promise((resolve) => {
+    const lines: string[] = [];
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -9,11 +10,11 @@ export async function readFromStandardIn(): Promise<string> {
     });
 
     rl.on("line", (line) => {
-      resolve(line);
+      lines.push(line);
     });
 
     rl.once("close", () => {
-      // end of input
+      resolve(lines.join("\n"));
     });
   });
 }
