@@ -18,7 +18,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
-    project: "./tsconfig.test.json",
   },
+  ignorePatterns: ["build/**/*", "node_modules/**/*"],
   rules: {},
 };
