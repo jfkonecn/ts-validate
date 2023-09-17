@@ -1,16 +1,10 @@
-import { SyntaxKind } from "typescript";
-import { parseTypeSrcript, readFromStandardIn } from "./utils";
+import { readFromStandardIn } from "./utils";
+import { createValidators } from "./validator-makers";
 
 async function main(): Promise<void> {
   const input = await readFromStandardIn();
-  console.log(input);
-  const parsed = parseTypeSrcript(input);
-  parsed.forEachChild((node) => {
-    console.log(node.kind);
-    if (SyntaxKind.TypeAliasDeclaration === node.kind) {
-      console.log("type alias");
-    }
-  });
+  const result = createValidators(input);
+  console.log(result);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
