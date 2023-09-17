@@ -17,14 +17,13 @@ describe("Your Test Suite", () => {
       childProcess.stdout.on("data", (data) => {
         const output = data.toString();
         console.log(output);
-        // expect(output).toContain("Expected Output");
       });
 
       childProcess.on("exit", (code) => {
         if (code === 0) {
           done();
         } else {
-          done.fail(`Process exited with code ${code}`);
+          done(`Process exited with code ${code}`);
         }
       });
 
