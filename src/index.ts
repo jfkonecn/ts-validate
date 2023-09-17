@@ -1,3 +1,4 @@
-import { sayHello } from "./utils";
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import { readFromStandardIn } from "./utils";
 
-sayHello("World");
+readFromStandardIn().then(console.log);
