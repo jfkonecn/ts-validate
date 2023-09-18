@@ -16,12 +16,12 @@ function createValidationLogic(
   node: ts.Node,
   statements: ts.Statement[],
 ): void {
-  if (ts.isTypeLiteralNode(node)) {
-    console.log("is type literal node", node);
-    if (ts.isStringLiteralLike(node)) {
-      console.log("is string literal");
+  if (ts.isPropertySignature(node)) {
+    //console.log("is type literal node", node.kind, node);
+    if (node.type?.kind === ts.SyntaxKind.StringKeyword) {
       const condition = ts.factory.createBinaryExpression(
-        ts.factory.createTypeOfExpression(node),
+        //ts.factory.createTypeOfExpression(node.type),
+        ts.factory.createStringLiteral("string"),
         ts.SyntaxKind.EqualsEqualsEqualsToken,
         ts.factory.createStringLiteral("string"),
       );
@@ -62,7 +62,7 @@ function createValidatorForType(
     // ts.factory.createIfStatement(condition, ifBody),
     // ts.factory.createReturnStatement(recurse),
   ];
-  node.forEachChild((node) => {
+  node.type.forEachChild((node) => {
     createValidationLogic(node, statements);
   });
 
