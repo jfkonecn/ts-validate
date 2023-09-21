@@ -17,36 +17,22 @@ function createValidationLogic(
   statements: ts.Statement[],
 ): void {
   if (ts.isPropertySignature(node)) {
-    //console.log("is type literal node", node.kind, node);
     if (node.type?.kind === ts.SyntaxKind.StringKeyword) {
       const condition = ts.factory.createBinaryExpression(
-        //ts.factory.createTypeOfExpression(node.type),
-        //ts.factory.createTypeOfExpression(
-        //ts.factory.createAsExpression(
-        //ts.factory.createStringLiteral("aaaaaaaaaa"),
-        //node.type,
-        //),
-        //),
-        //ts.factory.createStringLiteral("string"),
-        //ts.factory.createPropertyAccessExpression(
-        //ts.factory.createStringLiteral(""),
-        //"type",
-        //),
         ts.factory.createTypeOfExpression(
           ts.factory.createPropertyAccessExpression(
             ts.factory.createIdentifier("arg"),
-            "tedst",
+            node.name as any as string,
           ),
         ),
-        ts.SyntaxKind.EqualsEqualsEqualsToken,
+        ts.SyntaxKind.ExclamationEqualsEqualsToken,
         ts.factory.createStringLiteral("string"),
       );
       const ifBody = ts.factory.createBlock(
-        [ts.factory.createReturnStatement(ts.factory.createNumericLiteral(1))],
+        [ts.factory.createReturnStatement(ts.factory.createFalse())],
         true,
       );
       statements.push(ts.factory.createIfStatement(condition, ifBody));
-      console.log("pushed", statements);
     }
   }
 }
@@ -64,23 +50,11 @@ function createValidatorForType(
     ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
   );
 
-  const decrementedArg = ts.factory.createBinaryExpression(
-    paramName,
-    ts.SyntaxKind.MinusToken,
-    ts.factory.createNumericLiteral(1),
-  );
-  const recurse = ts.factory.createBinaryExpression(
-    paramName,
-    ts.SyntaxKind.AsteriskToken,
-    ts.factory.createCallExpression(functionName, undefined, [decrementedArg]),
-  );
-  const statements: ts.Statement[] = [
-    // ts.factory.createIfStatement(condition, ifBody),
-    // ts.factory.createReturnStatement(recurse),
-  ];
+  const statements: ts.Statement[] = [];
   node.type.forEachChild((node) => {
     createValidationLogic(node, statements);
   });
+  statements.push(ts.factory.createReturnStatement(ts.factory.createTrue()));
 
   return ts.factory.createFunctionDeclaration(
     [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
