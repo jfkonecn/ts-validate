@@ -21,7 +21,23 @@ function createValidationLogic(
     if (node.type?.kind === ts.SyntaxKind.StringKeyword) {
       const condition = ts.factory.createBinaryExpression(
         //ts.factory.createTypeOfExpression(node.type),
-        ts.factory.createStringLiteral("string"),
+        //ts.factory.createTypeOfExpression(
+        //ts.factory.createAsExpression(
+        //ts.factory.createStringLiteral("aaaaaaaaaa"),
+        //node.type,
+        //),
+        //),
+        //ts.factory.createStringLiteral("string"),
+        //ts.factory.createPropertyAccessExpression(
+        //ts.factory.createStringLiteral(""),
+        //"type",
+        //),
+        ts.factory.createTypeOfExpression(
+          ts.factory.createPropertyAccessExpression(
+            ts.factory.createIdentifier("arg"),
+            "tedst",
+          ),
+        ),
         ts.SyntaxKind.EqualsEqualsEqualsToken,
         ts.factory.createStringLiteral("string"),
       );
