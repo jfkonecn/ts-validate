@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { v4 } from "uuid";
 
 // https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
 
@@ -12,43 +13,81 @@ export function createValidators(content: string): string {
   return createValidator(parsedFile);
 }
 
+function primitiveTypeToValidator(
+  typeString: string,
+  varName: ts.Identifier,
+  node: ts.PropertySignature,
+  statements: ts.Statement[],
+): void {
+  const condition = ts.factory.createBinaryExpression(
+    ts.factory.createTypeOfExpression(
+      ts.factory.createPropertyAccessExpression(
+        varName,
+        node.name as any as string,
+      ),
+    ),
+    ts.SyntaxKind.ExclamationEqualsEqualsToken,
+    ts.factory.createStringLiteral(typeString),
+  );
+  const ifBody = ts.factory.createBlock(
+    [ts.factory.createReturnStatement(ts.factory.createFalse())],
+    true,
+  );
+  statements.push(ts.factory.createIfStatement(condition, ifBody));
+}
+
 function createValidationLogic(
+  varName: ts.Identifier,
   node: ts.Node,
   statements: ts.Statement[],
 ): void {
-  if (ts.isPropertySignature(node)) {
+  if ((node as any).name === "null") {
+    console.log(node);
+  }
+  if (ts.isTypeAliasDeclaration(node)) {
+    const newVarName = ts.factory.createIdentifier(
+      `var_${v4()}`.replace(/-/g, "_"),
+    );
+    const assignment = ts.factory.createExpressionStatement(
+      ts.factory.createAssignment(varName, newVarName),
+    );
+    statements.push(assignment);
+    node.type.forEachChild((node) => {
+      createValidationLogic(newVarName, node, statements);
+    });
+  } else if (ts.isPropertySignature(node)) {
     if (node.type?.kind === ts.SyntaxKind.StringKeyword) {
-      const condition = ts.factory.createBinaryExpression(
-        ts.factory.createTypeOfExpression(
-          ts.factory.createPropertyAccessExpression(
-            ts.factory.createIdentifier("arg"),
-            node.name as any as string,
-          ),
-        ),
-        ts.SyntaxKind.ExclamationEqualsEqualsToken,
-        ts.factory.createStringLiteral("string"),
-      );
-      const ifBody = ts.factory.createBlock(
-        [ts.factory.createReturnStatement(ts.factory.createFalse())],
-        true,
-      );
-      statements.push(ts.factory.createIfStatement(condition, ifBody));
+      primitiveTypeToValidator("string", varName, node, statements);
     } else if (node.type?.kind === ts.SyntaxKind.NumberKeyword) {
+      primitiveTypeToValidator("number", varName, node, statements);
+    } else if (node.type?.kind === ts.SyntaxKind.BigIntKeyword) {
+      primitiveTypeToValidator("bigint", varName, node, statements);
+    } else if (node.type?.kind === ts.SyntaxKind.BooleanKeyword) {
+      primitiveTypeToValidator("boolean", varName, node, statements);
+    } else if (node.type?.kind === ts.SyntaxKind.SymbolKeyword) {
+      primitiveTypeToValidator("symbol", varName, node, statements);
+    } else if (
+      node.type?.kind === ts.SyntaxKind.LiteralType &&
+      (node.type as any).literal.kind === ts.SyntaxKind.NullKeyword
+    ) {
+      console.log(node);
       const condition = ts.factory.createBinaryExpression(
-        ts.factory.createTypeOfExpression(
-          ts.factory.createPropertyAccessExpression(
-            ts.factory.createIdentifier("arg"),
-            node.name as any as string,
-          ),
+        ts.factory.createPropertyAccessExpression(
+          varName,
+          node.name as any as string,
         ),
         ts.SyntaxKind.ExclamationEqualsEqualsToken,
-        ts.factory.createStringLiteral("number"),
+        ts.factory.createNull(),
       );
       const ifBody = ts.factory.createBlock(
         [ts.factory.createReturnStatement(ts.factory.createFalse())],
         true,
       );
       statements.push(ts.factory.createIfStatement(condition, ifBody));
+    } else if (node.type?.kind === ts.SyntaxKind.UndefinedKeyword) {
+      primitiveTypeToValidator("undefined", varName, node, statements);
+    } else {
+      console.log(node);
     }
   }
 }
@@ -67,9 +106,7 @@ function createValidatorForType(
   );
 
   const statements: ts.Statement[] = [];
-  node.type.forEachChild((node) => {
-    createValidationLogic(node, statements);
-  });
+  createValidationLogic(paramName, node, statements);
   statements.push(ts.factory.createReturnStatement(ts.factory.createTrue()));
 
   return ts.factory.createFunctionDeclaration(
