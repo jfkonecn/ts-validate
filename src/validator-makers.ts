@@ -33,6 +33,22 @@ function createValidationLogic(
         true,
       );
       statements.push(ts.factory.createIfStatement(condition, ifBody));
+    } else if (node.type?.kind === ts.SyntaxKind.NumberKeyword) {
+      const condition = ts.factory.createBinaryExpression(
+        ts.factory.createTypeOfExpression(
+          ts.factory.createPropertyAccessExpression(
+            ts.factory.createIdentifier("arg"),
+            node.name as any as string,
+          ),
+        ),
+        ts.SyntaxKind.ExclamationEqualsEqualsToken,
+        ts.factory.createStringLiteral("number"),
+      );
+      const ifBody = ts.factory.createBlock(
+        [ts.factory.createReturnStatement(ts.factory.createFalse())],
+        true,
+      );
+      statements.push(ts.factory.createIfStatement(condition, ifBody));
     }
   }
 }
