@@ -37,7 +37,7 @@ function primitiveTypeToValidator(
 }
 
 function createValidationLogic(
-  varName: ts.Identifier,
+  varNode: ts.Identifier,
   node: ts.Node,
   statements: ts.Statement[],
 ): void {
@@ -46,10 +46,21 @@ function createValidationLogic(
   }
   if (ts.isTypeAliasDeclaration(node)) {
     const newVarName = ts.factory.createIdentifier(
-      `var_${v4()}`.replace(/-/g, "_"),
+      `var${v4()}`.replace(/-/g, ""),
     );
-    const assignment = ts.factory.createExpressionStatement(
-      ts.factory.createAssignment(varName, newVarName),
+    const assignment = ts.factory.createVariableStatement(
+      undefined,
+      ts.factory.createVariableDeclarationList(
+        [
+          ts.factory.createVariableDeclaration(
+            newVarName,
+            undefined,
+            undefined,
+            varNode,
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
     );
     statements.push(assignment);
     node.type.forEachChild((node) => {
@@ -57,15 +68,15 @@ function createValidationLogic(
     });
   } else if (ts.isPropertySignature(node)) {
     if (node.type?.kind === ts.SyntaxKind.StringKeyword) {
-      primitiveTypeToValidator("string", varName, node, statements);
+      primitiveTypeToValidator("string", varNode, node, statements);
     } else if (node.type?.kind === ts.SyntaxKind.NumberKeyword) {
-      primitiveTypeToValidator("number", varName, node, statements);
+      primitiveTypeToValidator("number", varNode, node, statements);
     } else if (node.type?.kind === ts.SyntaxKind.BigIntKeyword) {
-      primitiveTypeToValidator("bigint", varName, node, statements);
+      primitiveTypeToValidator("bigint", varNode, node, statements);
     } else if (node.type?.kind === ts.SyntaxKind.BooleanKeyword) {
-      primitiveTypeToValidator("boolean", varName, node, statements);
+      primitiveTypeToValidator("boolean", varNode, node, statements);
     } else if (node.type?.kind === ts.SyntaxKind.SymbolKeyword) {
-      primitiveTypeToValidator("symbol", varName, node, statements);
+      primitiveTypeToValidator("symbol", varNode, node, statements);
     } else if (
       node.type?.kind === ts.SyntaxKind.LiteralType &&
       (node.type as any).literal.kind === ts.SyntaxKind.NullKeyword
@@ -73,7 +84,7 @@ function createValidationLogic(
       console.log(node);
       const condition = ts.factory.createBinaryExpression(
         ts.factory.createPropertyAccessExpression(
-          varName,
+          varNode,
           node.name as any as string,
         ),
         ts.SyntaxKind.ExclamationEqualsEqualsToken,
@@ -85,7 +96,7 @@ function createValidationLogic(
       );
       statements.push(ts.factory.createIfStatement(condition, ifBody));
     } else if (node.type?.kind === ts.SyntaxKind.UndefinedKeyword) {
-      primitiveTypeToValidator("undefined", varName, node, statements);
+      primitiveTypeToValidator("undefined", varNode, node, statements);
     } else {
       console.log(node);
     }
