@@ -1,5 +1,4 @@
 import readline from "readline";
-import ts from "typescript";
 
 export async function readFromStandardIn(): Promise<string> {
   return await new Promise((resolve) => {

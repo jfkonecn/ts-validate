@@ -3,6 +3,7 @@
 
 const path = require("path");
 const ESLintPlugin = require("eslint-webpack-plugin");
+const exec = require("child_process").exec;
 
 module.exports = {
   entry: "./src/index.ts", // Entry point of your application
@@ -27,5 +28,18 @@ module.exports = {
     new ESLintPlugin({
       extensions: ["ts"],
     }),
+    {
+      apply: (compiler) => {
+        compiler.hooks.afterEmit.tap("AfterEmitPlugin", (compilation) => {
+          exec("node webpack/post-build.js", (err, stdout, stderr) => {
+            if (stdout !== "") process.stdout.write(stdout);
+            if (stderr !== "") process.stderr.write(stderr);
+            if (err !== null) {
+              console.log(err);
+            }
+          });
+        });
+      },
+    },
   ],
 };
