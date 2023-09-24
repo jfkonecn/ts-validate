@@ -41,9 +41,6 @@ function createValidationLogic(
   node: ts.Node,
   statements: ts.Statement[],
 ): void {
-  if ((node as any).name === "null") {
-    console.log(node);
-  }
   if (ts.isTypeAliasDeclaration(node)) {
     const newVarName = ts.factory.createIdentifier(
       `var${v4()}`.replace(/-/g, ""),
