@@ -19,15 +19,27 @@ function primitiveTypeToValidator(
   node: ts.PropertySignature,
   statements: ts.Statement[],
 ): void {
-  const condition = ts.factory.createBinaryExpression(
-    ts.factory.createTypeOfExpression(
-      ts.factory.createPropertyAccessExpression(
-        varName,
-        node.name as any as string,
+  const condition = ts.factory.createLogicalOr(
+    ts.factory.createPrefixUnaryExpression(
+      ts.SyntaxKind.ExclamationToken,
+      ts.factory.createParenthesizedExpression(
+        ts.factory.createBinaryExpression(
+          ts.factory.createStringLiteralFromNode(node.name as any),
+          ts.SyntaxKind.InKeyword,
+          varName,
+        ),
       ),
     ),
-    ts.SyntaxKind.ExclamationEqualsEqualsToken,
-    ts.factory.createStringLiteral(typeString),
+    ts.factory.createBinaryExpression(
+      ts.factory.createTypeOfExpression(
+        ts.factory.createPropertyAccessExpression(
+          varName,
+          node.name as any as string,
+        ),
+      ),
+      ts.SyntaxKind.ExclamationEqualsEqualsToken,
+      ts.factory.createStringLiteral(typeString),
+    ),
   );
   const ifBody = ts.factory.createBlock(
     [ts.factory.createReturnStatement(ts.factory.createFalse())],
@@ -45,21 +57,40 @@ function createValidationLogic(
     const newVarName = ts.factory.createIdentifier(
       `var${v4()}`.replace(/-/g, ""),
     );
-    const assignment = ts.factory.createVariableStatement(
-      undefined,
-      ts.factory.createVariableDeclarationList(
-        [
-          ts.factory.createVariableDeclaration(
-            newVarName,
-            undefined,
-            undefined,
-            varNode,
-          ),
-        ],
-        ts.NodeFlags.Const,
+    statements.push(
+      ts.factory.createVariableStatement(
+        undefined,
+        ts.factory.createVariableDeclarationList(
+          [
+            ts.factory.createVariableDeclaration(
+              newVarName,
+              undefined,
+              undefined,
+              varNode,
+            ),
+          ],
+          ts.NodeFlags.Const,
+        ),
       ),
     );
-    statements.push(assignment);
+    const condition = ts.factory.createLogicalOr(
+      ts.factory.createBinaryExpression(
+        ts.factory.createTypeOfExpression(newVarName),
+        ts.SyntaxKind.ExclamationEqualsEqualsToken,
+        ts.factory.createStringLiteral("object"),
+      ),
+      ts.factory.createBinaryExpression(
+        newVarName,
+        ts.SyntaxKind.EqualsEqualsEqualsToken,
+        ts.factory.createNull(),
+      ),
+    );
+    const ifBody = ts.factory.createBlock(
+      [ts.factory.createReturnStatement(ts.factory.createFalse())],
+      true,
+    );
+    statements.push(ts.factory.createIfStatement(condition, ifBody));
+
     node.type.forEachChild((node) => {
       createValidationLogic(newVarName, node, statements);
     });
@@ -78,14 +109,25 @@ function createValidationLogic(
       node.type?.kind === ts.SyntaxKind.LiteralType &&
       (node.type as any).literal.kind === ts.SyntaxKind.NullKeyword
     ) {
-      console.log(node);
-      const condition = ts.factory.createBinaryExpression(
-        ts.factory.createPropertyAccessExpression(
-          varNode,
-          node.name as any as string,
+      const condition = ts.factory.createLogicalOr(
+        ts.factory.createPrefixUnaryExpression(
+          ts.SyntaxKind.ExclamationToken,
+          ts.factory.createParenthesizedExpression(
+            ts.factory.createBinaryExpression(
+              ts.factory.createStringLiteralFromNode(node.name as any),
+              ts.SyntaxKind.InKeyword,
+              varNode,
+            ),
+          ),
         ),
-        ts.SyntaxKind.ExclamationEqualsEqualsToken,
-        ts.factory.createNull(),
+        ts.factory.createBinaryExpression(
+          ts.factory.createPropertyAccessExpression(
+            varNode,
+            node.name as any as string,
+          ),
+          ts.SyntaxKind.ExclamationEqualsEqualsToken,
+          ts.factory.createNull(),
+        ),
       );
       const ifBody = ts.factory.createBlock(
         [ts.factory.createReturnStatement(ts.factory.createFalse())],
