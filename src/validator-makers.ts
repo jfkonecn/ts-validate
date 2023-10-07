@@ -3,16 +3,6 @@ import { v4 } from "uuid";
 
 // https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
 
-export function createValidators(content: string): string {
-  const parsedFile = ts.createSourceFile(
-    "test.ts",
-    content,
-    ts.ScriptTarget.ES2015,
-  );
-
-  return createValidator(parsedFile);
-}
-
 function primitiveTypeToValidator(
   typeString: string,
   varName: ts.Identifier,
@@ -170,7 +160,7 @@ function createValidatorForType(
   );
 }
 
-function createValidator(node: ts.SourceFile): string {
+export function createValidators(node: ts.SourceFile): string {
   const file = ts.createSourceFile(
     "source.ts",
     "",
