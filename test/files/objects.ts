@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+import { type SomeImport } from "./some-imports";
 
 export type User = {
   name: string;
@@ -9,4 +9,6 @@ export type User = {
   symbol: symbol;
   null: null;
   undefined: undefined;
+  recursiveDef: User;
+  imported: SomeImport;
 };

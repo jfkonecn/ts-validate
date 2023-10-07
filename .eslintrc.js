@@ -20,5 +20,7 @@ module.exports = {
     sourceType: "module",
   },
   ignorePatterns: ["build/**/*", "node_modules/**/*"],
-  rules: {},
+  rules: {
+    "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+  },
 };
