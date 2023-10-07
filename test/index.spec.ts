@@ -1,35 +1,32 @@
-import { spawn } from "child_process";
-import fs from "fs";
+import { validateUser } from "./generated/validateObjects";
 
-const dir = "test/files";
+const userTestCases: Array<[unknown, boolean]> = [
+  [
+    {
+      name: "John",
+      age: 42,
+      occupation: "Software Engineer",
+      bigInt: BigInt(42),
+      boolean: true,
+      symbol: Symbol("foo"),
+      null: null,
+      undefined,
+    },
+    true,
+  ],
+  [
+    {
+      name: "John",
+      age: undefined,
+    },
+    false,
+  ],
+];
 
-const files = ["objects.ts"];
-
-describe("Your Test Suite", () => {
-  files.forEach((file) => {
-    const path = `${dir}/${file}`;
-    it(`${file} should pass files through stdin to index.js`, (done) => {
-      const data = fs.readFileSync(path, "utf8");
-      const childProcess = spawn("node", ["build/index.js"], {
-        stdio: "pipe", // Enable stdin, stdout, and stderr pipes
-      });
-
-      childProcess.stdout.on("data", (data) => {
-        const output = data.toString();
-        console.log(output);
-      });
-
-      childProcess.on("exit", (code) => {
-        if (code === 0) {
-          done();
-        } else {
-          done(`Process exited with code ${code}`);
-        }
-      });
-
-      // Write files to the stdin of the child process
-      childProcess.stdin.write(data);
-      childProcess.stdin.end(); // Close stdin
+describe("objects", () => {
+  userTestCases.forEach(([obj, expectedToBeTrue], idx) => {
+    it(`${idx} should pass files through stdin to index.js`, () => {
+      expect(validateUser(obj)).toBe(expectedToBeTrue);
     });
   });
 });
