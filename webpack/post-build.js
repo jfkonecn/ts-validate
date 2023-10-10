@@ -18,5 +18,13 @@ files.forEach((file) => {
     outputPath,
   ]);
 
+  childProcess.stdout.on("data", (data) => {
+    console.log(`${data}`);
+  });
+
+  childProcess.stderr.on("data", (data) => {
+    console.error(`${data}`);
+  });
+
   childProcess.stdin.end();
 });
