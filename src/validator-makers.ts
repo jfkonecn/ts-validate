@@ -128,7 +128,7 @@ function createValidationLogic(
     } else if (node.type?.kind === ts.SyntaxKind.UndefinedKeyword) {
       primitiveTypeToValidator("undefined", varNode, node, statements);
     } else {
-      console.log(node);
+      // console.log(node);
     }
   }
 }
@@ -162,9 +162,9 @@ function createValidatorForType(
 }
 
 export function createValidators(
-  inputFolderPath: string,
+  inputFilePath: string,
   node: ts.SourceFile,
-  outputFolderPath: string,
+  outputFilePath: string,
 ): string {
   const file = ts.createSourceFile(
     "source.ts",
@@ -173,27 +173,61 @@ export function createValidators(
     false,
     ts.ScriptKind.TS,
   );
+  const inputFolderPath = path.dirname(inputFilePath);
+  const outputFolderPath = path.dirname(outputFilePath);
 
-  const imports: ts.ImportDeclaration[] = [];
+  const importDic: Record<string, ts.ImportSpecifier[]> = {};
+  function addImport(importPath: string, importNames: string[]): void {
+    if (importDic[importPath] === undefined) {
+      importDic[importPath] = [];
+    }
+    importNames.forEach((importName) => {
+      (importDic[importPath] as ts.ImportSpecifier[]).push(
+        ts.factory.createImportSpecifier(
+          true,
+          undefined,
+          ts.factory.createIdentifier(importName),
+        ),
+      );
+    });
+  }
   const newNodes: ts.FunctionDeclaration[] = [];
   node.forEachChild((node) => {
     if (ts.isTypeAliasDeclaration(node)) {
+      const inputFileWithNoExtension = path.parse(
+        path.basename(inputFilePath),
+      ).name;
+      const final = path.relative(
+        outputFolderPath,
+        path.join(inputFolderPath, inputFileWithNoExtension),
+      );
+      addImport(final, [node.name.text]);
       newNodes.push(createValidatorForType(node));
     } else if (ts.isImportDeclaration(node)) {
       const importPath = (node.moduleSpecifier as any).text;
       const typesFolder = path.resolve(inputFolderPath, importPath);
       const final = path.relative(outputFolderPath, typesFolder);
-      const newImport = ts.factory.updateImportDeclaration(
-        node,
-        (node as any).decorators,
-        (node as any).importClause,
-        (node as any).modifiers,
-        ts.factory.createStringLiteral(final) as any,
-      );
 
-      imports.push(newImport);
+      const types: string[] = [];
+      node.importClause?.namedBindings?.forEachChild((node) => {
+        types.push((node as any).name.text);
+      });
+      addImport(final, types);
     }
   });
+  const imports = Object.entries(importDic).map(
+    ([importPath, namedImports]) => {
+      return ts.factory.createImportDeclaration(
+        undefined,
+        ts.factory.createImportClause(
+          false,
+          undefined,
+          ts.factory.createNamedImports(namedImports),
+        ),
+        ts.factory.createStringLiteral(importPath) as any,
+      );
+    },
+  );
 
   const arr = ts.factory.createNodeArray([...imports, ...newNodes]);
 

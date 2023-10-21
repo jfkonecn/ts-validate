@@ -17,11 +17,7 @@ function main(): void {
   const outputDir = path.dirname(outputFilePath);
 
   console.log(path.dirname(inputFilePath));
-  const result = createValidators(
-    path.dirname(inputFilePath),
-    inputFile,
-    path.dirname(outputFilePath),
-  );
+  const result = createValidators(inputFilePath, inputFile, outputFilePath);
   fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(outputFilePath, result);
 }
