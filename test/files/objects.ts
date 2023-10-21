@@ -1,3 +1,5 @@
+import { type SomeImport } from "./some-imports";
+
 export type User = {
   name: string;
   age: number;
@@ -7,4 +9,8 @@ export type User = {
   symbol: symbol;
   null: null;
   undefined: undefined;
+};
+
+export type SomethingWithImports = {
+  imported: SomeImport;
 };

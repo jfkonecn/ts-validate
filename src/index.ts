@@ -16,7 +16,12 @@ function main(): void {
   const inputFile = readInputFileFromArgs(inputFilePath);
   const outputDir = path.dirname(outputFilePath);
 
-  const result = createValidators(inputFile);
+  console.log(path.dirname(inputFilePath));
+  const result = createValidators(
+    path.dirname(inputFilePath),
+    inputFile,
+    path.dirname(outputFilePath),
+  );
   fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(outputFilePath, result);
 }

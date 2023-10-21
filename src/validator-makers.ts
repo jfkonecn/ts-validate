@@ -1,5 +1,6 @@
 import ts from "typescript";
 import { v4 } from "uuid";
+import path from "path";
 
 // https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
 
@@ -160,7 +161,11 @@ function createValidatorForType(
   );
 }
 
-export function createValidators(node: ts.SourceFile): string {
+export function createValidators(
+  inputFolderPath: string,
+  node: ts.SourceFile,
+  outputFolderPath: string,
+): string {
   const file = ts.createSourceFile(
     "source.ts",
     "",
@@ -169,14 +174,28 @@ export function createValidators(node: ts.SourceFile): string {
     ts.ScriptKind.TS,
   );
 
+  const imports: ts.ImportDeclaration[] = [];
   const newNodes: ts.FunctionDeclaration[] = [];
   node.forEachChild((node) => {
     if (ts.isTypeAliasDeclaration(node)) {
       newNodes.push(createValidatorForType(node));
+    } else if (ts.isImportDeclaration(node)) {
+      const importPath = (node.moduleSpecifier as any).text;
+      const typesFolder = path.resolve(inputFolderPath, importPath);
+      const final = path.relative(outputFolderPath, typesFolder);
+      const newImport = ts.factory.updateImportDeclaration(
+        node,
+        (node as any).decorators,
+        (node as any).importClause,
+        (node as any).modifiers,
+        ts.factory.createStringLiteral(final) as any,
+      );
+
+      imports.push(newImport);
     }
   });
 
-  const arr = ts.factory.createNodeArray(newNodes);
+  const arr = ts.factory.createNodeArray([...imports, ...newNodes]);
 
   const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
   return printer.printList(ts.ListFormat.MultiLine, arr, file);
